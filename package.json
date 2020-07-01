@@ -14,7 +14,6 @@
     "test": "lerna run --stream test",
     "lint": "lerna run --stream lint",
     "lint:commit": "commitlint -e",
-    "lint:commit-travis": "commitlint-travis",
     "commit": "./node_modules/cz-customizable/standalone.js"
   },
   "devDependencies": {
