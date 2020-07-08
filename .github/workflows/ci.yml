@@ -1,8 +1,6 @@
 name: build and consume by foreman & plugins
 
-on:
-  pull_request:
-    branches: [master]
+on: push
 
 jobs:
   test:
@@ -12,7 +10,8 @@ jobs:
       matrix:
         include:
           - repo: foreman
-            org: theforeman
+            org: sharvit
+            ref: feat/vendor-v4.10.0
             node-version: 10.x
           - repo: katello
             org: Katello
@@ -22,7 +21,8 @@ jobs:
             ref: feat/foreman_js_link
             node-version: 10.x
           - repo: foreman
-            org: theforeman
+            org: sharvit
+            ref: feat/vendor-v4.10.0
             node-version: 12.x
           - repo: katello
             org: Katello
@@ -54,7 +54,8 @@ jobs:
       - name: Checkout foreman
         uses: actions/checkout@v2
         with:
-          repository: theforeman/foreman
+          repository: sharvit/foreman
+          ref: feat/vendor-v4.10.0
           path: ./projects/foreman
       - name: Install foreman npm dependencies
         run: npm install
