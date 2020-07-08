@@ -1,0 +1,82 @@
+name: build and consume by foreman & plugins
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - repo: foreman
+            org: theforeman
+            node-version: 10.x
+          - repo: katello
+            org: Katello
+            node-version: 10.x
+          - repo: foreman-tasks
+            org: laviro
+            ref: feat/foreman_js_link
+            node-version: 10.x
+          - repo: foreman
+            org: theforeman
+            node-version: 12.x
+          - repo: katello
+            org: Katello
+            node-version: 12.x
+          - repo: foreman-tasks
+            org: laviro
+            ref: feat/foreman_js_link
+            node-version: 12.x
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      # We could update the postinstall action for foreman to look for an environment variable for plugin webpack dirs
+      # before kicking off the ruby script to find them, this would eliminate the ruby dep and running `npm install` in plugins.
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.7
+      - name: Checkout foreman-js
+        uses: actions/checkout@v2
+        with:
+          path: ./projects/foreman-js
+      - name: Install foreman-js npm dependencies
+        run: npm install
+        working-directory: ${{ github.workspace }}/projects/foreman-js
+      - name: Build foreman-js
+        run: npm run build
+        working-directory: ${{ github.workspace }}/projects/foreman-js
+      - name: Checkout foreman
+        uses: actions/checkout@v2
+        with:
+          repository: theforeman/foreman
+          path: ./projects/foreman
+      - name: Install foreman npm dependencies
+        run: npm install
+        working-directory: ${{ github.workspace }}/projects/foreman
+      - name: Link foreman to foreman-js
+        run: npm run foreman-js:link
+        working-directory: ${{ github.workspace }}/projects/foreman
+      - name: Checkout ${{ matrix.repo }}
+        if: ${{ matrix.repo != 'foreman' }}
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ matrix.org }}/${{ matrix.repo }}
+          ref: ${{ matrix.ref }}
+          path: ./projects/${{ matrix.repo }}
+      - name: Install ${{ matrix.repo }} npm dependencies
+        if: ${{ matrix.repo != 'foreman' }}
+        run: npm install
+        working-directory: ${{ github.workspace }}/projects/${{ matrix.repo }}
+      - name: Link ${{ matrix.repo }} to foreman-js
+        if: ${{ matrix.repo != 'katello' && matrix.repo != 'foreman' }}
+        run: npm run foreman-js:link
+        working-directory: ${{ github.workspace }}/projects/${{ matrix.repo }}
+      - name: Run ${{ matrix.repo }} tests
+        run: npm test
+        working-directory: ${{ github.workspace }}/projects/${{ matrix.repo }}
